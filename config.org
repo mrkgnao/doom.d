@@ -1,0 +1,128 @@
+* Self-identification
+Some functionality uses this to identify you, e.g. GPG configuration, email
+clients, file templates and snippets.
+
+#+BEGIN_SRC emacs-lisp
+(setq user-full-name "Soham Chowdhury"
+      user-mail-address "chow.soham@gmail.com")
+#+END_SRC
+
+* Appearance
+** Controlling fonts
+Doom exposes five (optional) variables for controlling fonts in Doom. Here
+are the three important ones:
+
++ `doom-font'
++ `doom-variable-pitch-font'
++ `doom-big-font' -- used for `doom-big-font-mode'; use this for
+  presentations or streaming.
+
+They all accept either a font-spec, font string ("Input Mono-12"), or xlfd
+font string.
+
+#+BEGIN_SRC emacs-lisp
+(setq doom-font (font-spec :family "PragmataPro Liga" :size 24)
+      doom-variable-pitch-font (font-spec :family "PragmataPro Liga" :size 24))
+#+END_SRC
+
+** Theming
+You can either set `doom-theme' or manually load a theme with the
+`load-theme' function. This is the default:
+
+#+BEGIN_SRC emacs-lisp
+(setq doom-theme 'doom-dracula)
+#+END_SRC
+** Random
+#+BEGIN_SRC emacs-lisp
+(add-to-list 'default-frame-alist '(inhibit-double-buffering . t))
+(setq treemacs-width 32)
+#+END_SRC
+
+* Org
+If you use `org' and don't want your org files in the default location below,
+change `org-directory'. It must be set before org loads!
+
+#+BEGIN_SRC emacs-lisp
+(setq org-directory "~/org/")
+
+(after! org
+  (add-to-list 'org-modules 'org-habit t))
+
+(map! :map org-mode-map
+      :localleader
+      "x" #'org-latex-preview)
+#+END_SRC
+
+* General
+** Line numbers
+This determines the style of line numbers in effect. If set to `nil', line
+numbers are disabled. For relative line numbers, set this to `relative'.
+
+#+BEGIN_SRC emacs-lisp
+(setq display-line-numbers-type nil)
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(map! :leader
+       (:prefix-map ("b" . "buffer")
+        :desc "Previous buffer"             "h"   #'previous-buffer
+        :desc "Next buffer"                 "l"   #'next-buffer))
+
+(after! ivy
+  (define-key ivy-minibuffer-map (kbd "C-h") 'ivy-backward-delete-char))
+
+(defun setup-pragmata-ligatures ()
+  (setq prettify-symbols-alist
+        (append prettify-symbols-alist
+          '(("<-"   . ?🡐)
+            ("->"   . ?🡒)
+            ("=>"   . ?⇒)
+            ("<=>"  . ?⟺)
+            ("<==>" . ?⟺)
+            ("==>"  . ?⟹)
+            ("<=="  . ?⟸)
+            ("|->"  . ?⟼)
+            ("<-|"  . ?⟻)
+            ("|=>"  . ?⟾)
+            ("<=|"  . ?⟽)))))
+
+(defun refresh-pretty ()
+  (prettify-symbols-mode -1)
+  (prettify-symbols-mode +1))
+
+;; Hooks for modes in which to install the Pragmata ligatures
+(mapc (lambda (hook)
+        (add-hook hook (lambda () (setup-pragmata-ligatures) (refresh-pretty))))
+      '(text-mode-hook
+        prog-mode-hook))
+(global-prettify-symbols-mode +1)
+
+(setq org-bullets-bullet-list '("·" "··" "𐬼"))
+
+(add-hook! 'org-mode-hook (company-mode -1))
+(add-hook! 'org-capture-mode-hook (company-mode -1))
+
+;; Haskell
+
+(setq haskell-process-type 'cabal-new-repl)
+
+(after! lsp-haskell
+ (setq lsp-haskell-process-path-hie "ghcide")
+ (setq lsp-haskell-process-args-hie '()))
+
+(map! :leader
+      (:after lsp-mode
+        (:prefix ("l" . "LSP")
+          :desc "Excute code action" "a" #'lsp-execute-code-action
+          :desc "Go to definition" "d" #'lsp-find-definition
+          :desc "Glance at doc" "g" #'lsp-ui-doc-glance
+          (:prefix ("u" . "LSP UI")
+            :desc "Toggle doc mode" "d" #'lsp-ui-doc-mode
+            :desc "Toggle sideline mode"  "s" #'lsp-ui-sideline-mode
+            :desc "Glance at doc" "g" #'lsp-ui-doc-glance
+            :desc "Toggle imenu"  "i" #'lsp-ui-imenu))))
+
+(after! haskell-mode
+  (set-formatter! 'ormolu "ormolu"
+    :modes '(haskell-mode)))
+#+END_SRC
